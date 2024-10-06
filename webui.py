@@ -89,7 +89,6 @@ def check_input_validity(mode: str, prompt_wav: Optional[str], prompt_text: str,
     return True, ''
 
 
-
 def generate_audio(tts_text: str, mode_checkbox_group: str, sft_dropdown: str, prompt_text: str, 
                    prompt_wav_upload: Optional[str], prompt_wav_record: Optional[str], instruct_text: str,
                    seed: int, stream: bool, speed: float, stop_generation_flag: threading.Event):
@@ -215,7 +214,6 @@ def main():
         seed_button.click(generate_seed, inputs=[], outputs=seed)
   
         mode_checkbox_group.change(fn=change_instruction, inputs=[mode_checkbox_group], outputs=[instruction_text])
-
 
 
     demo.queue(max_size=4, default_concurrency_limit=2)
