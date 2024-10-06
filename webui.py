@@ -25,6 +25,8 @@ from functools import lru_cache
 from typing import Optional, Tuple
 from concurrent.futures import ProcessPoolExecutor
 import threading
+from faster_whisper import WhisperModel
+import gc
 
 # Global variables to control audio generation
 stop_generation_flag = threading.Event()
@@ -151,6 +153,26 @@ def generate_audio(tts_text: str, mode_checkbox_group: str, sft_dropdown: str, p
 
 
 
+
+def transcribe_audio(audio_file):
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    compute_type = "float16" if torch.cuda.is_available() else "int8"
+
+    model_size = "large-v3"
+    model = WhisperModel(model_size, device=device, compute_type=compute_type)
+
+    segments, info = model.transcribe(audio_file, beam_size=5)
+
+    # Clean up to free memory
+    del model
+    gc.collect()
+    torch.cuda.empty_cache()
+
+    # Return the transcribed text
+    transcribed_text = " ".join([segment.text for segment in segments])
+    return transcribed_text
+
+
 def main():
     def start_generation():
         global audio_chunks
@@ -173,6 +195,16 @@ def main():
         if audio_chunks:
             yield (TARGET_SR, np.concatenate(audio_chunks))
 
+    def start_transcription(audio_file):
+        if audio_file is None:
+            return "No audio file selected.", ""
+        
+        try:
+            transcribed_text = transcribe_audio(audio_file)
+            return "Transcription complete!", transcribed_text
+        except Exception as e:
+            return f"Error during transcription: {str(e)}", ""
+
     with gr.Blocks() as demo:
         gr.Markdown("### Repository [CosyVoice](https://github.com/FunAudioLLM/CosyVoice) \
                     Pre-trained Models [CosyVoice-300M](https://www.modelscope.cn/models/iic/CosyVoice-300M) \
@@ -194,7 +226,12 @@ def main():
         with gr.Row():
             prompt_wav_upload = gr.Audio(sources='upload', type='filepath', label='Select prompt audio file, note that sampling rate should not be lower than 16khz')
             prompt_wav_record = gr.Audio(sources='microphone', type='filepath', label='Record prompt audio file')
-        prompt_text = gr.Textbox(label="Input prompt text", lines=1, placeholder="Please enter prompt text, which should match the content of the prompt audio. Automatic recognition is not supported at the moment...", value='')
+        
+        with gr.Row():
+            transcribe_button = gr.Button("Transcribe Audio")
+            transcription_status = gr.Textbox(label="Transcription Status")
+        
+        prompt_text = gr.Textbox(label="Input prompt text", lines=3, placeholder="Transcribed text will appear here. You can also manually edit this field.", value='')
         instruct_text = gr.Textbox(label="Input instruct text", lines=1, placeholder="Please enter instruct text.", value='')
 
 
@@ -202,6 +239,12 @@ def main():
         stop_button = gr.Button("Stop Generating", visible=False)
 
         audio_output = gr.Audio(label="Synthesized audio", autoplay=True)
+
+        transcribe_button.click(
+            start_transcription,
+            inputs=[prompt_wav_upload],
+            outputs=[transcription_status, prompt_text]
+        )
 
         generate_button.click(start_generation, inputs=[], outputs=[generate_button, stop_button])
         generate_button.click(generate_audio_wrapper,
