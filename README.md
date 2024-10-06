@@ -1,3 +1,12 @@
+Modified version of the CosyVoice app.
+This version adds next features:
+- Translated GUI to English
+- Optimized CPU usage
+- Uses chunking to handle input text and output audio, so it's possible to make much longer audios
+- Optimized the GUI audio view
+- Stop button
+- Faster-whipser for transcribing the onput audio
+
 # CosyVoice
 ## 👉🏻 [CosyVoice Demos](https://fun-audio-llm.github.io/) 👈🏻
 [[CosyVoice Paper](https://fun-audio-llm.github.io/pdf/CosyVoice_v1.pdf)][[CosyVoice Studio](https://www.modelscope.cn/studios/iic/CosyVoice-300M)][[CosyVoice Code](https://github.com/FunAudioLLM/CosyVoice)]
