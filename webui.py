@@ -123,7 +123,7 @@ def generate_audio(tts_text: str, mode_checkbox_group: str, sft_dropdown: str, p
             continue
 
         if i > 0:
-            yield (TARGET_SR, np.zeros(int(TARGET_SR * 0.1))) # adds 1 seconds silent before each paragraph (not first paragraph)
+            yield (TARGET_SR, np.zeros(int(TARGET_SR * 0.05))) # adds 0.5 seconds silent before each paragraph (not first paragraph)
 
         if mode_checkbox_group == 'Pre-trained Voice':
             generator = cosyvoice.inference_sft(paragraph, sft_dropdown, stream=stream, speed=speed)
@@ -187,13 +187,20 @@ def main():
     def generate_audio_wrapper(*args):
         global audio_chunks
         audio_chunks = []
+        
+        # Show "Stop Generating" button immediately
+        yield (TARGET_SR, np.zeros(1)), gr.update(visible=False), gr.update(visible=True)
+        
         for chunk in generate_audio(*args, stop_generation_flag):
             audio_chunks.append(chunk[1])  # Append only the audio data
-            yield (TARGET_SR, np.concatenate(audio_chunks))
+            yield (TARGET_SR, np.concatenate(audio_chunks)), gr.update(visible=False), gr.update(visible=True)
         
-        # Final yield with the complete audio
+        # Final yield with the complete audio and button updates
         if audio_chunks:
-            yield (TARGET_SR, np.concatenate(audio_chunks))
+            yield (TARGET_SR, np.concatenate(audio_chunks)), gr.update(visible=True), gr.update(visible=False)
+        else:
+            # If no audio was generated, revert to initial state
+            yield (TARGET_SR, np.zeros(1)), gr.update(visible=True), gr.update(visible=False)
 
     def start_transcription(audio_file):
         if audio_file is None:
@@ -246,11 +253,11 @@ def main():
             outputs=[transcription_status, prompt_text]
         )
 
-        generate_button.click(start_generation, inputs=[], outputs=[generate_button, stop_button])
+        # generate_button.click(start_generation, inputs=[], outputs=[generate_button, stop_button])
         generate_button.click(generate_audio_wrapper,
-                            inputs=[tts_text, mode_checkbox_group, sft_dropdown, prompt_text, prompt_wav_upload, prompt_wav_record, instruct_text,
-                                    seed, stream, speed],
-                            outputs=[audio_output])
+                      inputs=[tts_text, mode_checkbox_group, sft_dropdown, prompt_text, prompt_wav_upload, prompt_wav_record, instruct_text,
+                              seed, stream, speed],
+                      outputs=[audio_output, generate_button, stop_button])
         stop_button.click(stop_generation, inputs=[], outputs=[generate_button, stop_button])
         
         seed_button.click(generate_seed, inputs=[], outputs=seed)
