@@ -5,7 +5,7 @@ This version adds next features:
 - Uses chunking to handle input text and output audio, so it's possible to make much longer audios
 - Optimized the GUI audio view
 - Stop button
-- Faster-whipser for transcribing the onput audio
+- Faster-whipser for transcribing the input audio
 
   ![app-GUI](https://github.com/user-attachments/assets/60a9ec44-2359-480e-9b19-27e30d164d28)
 
