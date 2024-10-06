@@ -7,6 +7,9 @@ This version adds next features:
 - Stop button
 - Faster-whipser for transcribing the onput audio
 
+  ![app-GUI](https://github.com/user-attachments/assets/60a9ec44-2359-480e-9b19-27e30d164d28)
+
+
 # CosyVoice
 ## 👉🏻 [CosyVoice Demos](https://fun-audio-llm.github.io/) 👈🏻
 [[CosyVoice Paper](https://fun-audio-llm.github.io/pdf/CosyVoice_v1.pdf)][[CosyVoice Studio](https://www.modelscope.cn/studios/iic/CosyVoice-300M)][[CosyVoice Code](https://github.com/FunAudioLLM/CosyVoice)]
