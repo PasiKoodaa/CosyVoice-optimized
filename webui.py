@@ -91,7 +91,6 @@ def check_input_validity(mode: str, prompt_wav: Optional[str], prompt_text: str,
     return True, ''
 
 
-
 def generate_audio(tts_text: str, mode_checkbox_group: str, sft_dropdown: str, prompt_text: str, 
                    prompt_wav_upload: Optional[str], prompt_wav_record: Optional[str], instruct_text: str,
                    seed: int, stream: bool, speed: float, stop_generation_flag: threading.Event):
@@ -152,8 +151,6 @@ def generate_audio(tts_text: str, mode_checkbox_group: str, sft_dropdown: str, p
     torch.cuda.empty_cache()
 
 
-
-
 def transcribe_audio(audio_file):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     compute_type = "float16" if torch.cuda.is_available() else "int8"
@@ -184,23 +181,18 @@ def main():
         stop_generation_flag.set()
         return gr.update(visible=True), gr.update(visible=False)
 
+
     def generate_audio_wrapper(*args):
         global audio_chunks
         audio_chunks = []
-        
-        # Show "Stop Generating" button immediately
-        yield (TARGET_SR, np.zeros(1)), gr.update(visible=False), gr.update(visible=True)
-        
         for chunk in generate_audio(*args, stop_generation_flag):
             audio_chunks.append(chunk[1])  # Append only the audio data
-            yield (TARGET_SR, np.concatenate(audio_chunks)), gr.update(visible=False), gr.update(visible=True)
+            yield (TARGET_SR, np.concatenate(audio_chunks))
         
-        # Final yield with the complete audio and button updates
+        # Final yield with the complete audio
         if audio_chunks:
-            yield (TARGET_SR, np.concatenate(audio_chunks)), gr.update(visible=True), gr.update(visible=False)
-        else:
-            # If no audio was generated, revert to initial state
-            yield (TARGET_SR, np.zeros(1)), gr.update(visible=True), gr.update(visible=False)
+            yield (TARGET_SR, np.concatenate(audio_chunks))
+
 
     def start_transcription(audio_file):
         if audio_file is None:
@@ -211,6 +203,7 @@ def main():
             return "Transcription complete!", transcribed_text
         except Exception as e:
             return f"Error during transcription: {str(e)}", ""
+        
 
     with gr.Blocks() as demo:
         gr.Markdown("### Repository [CosyVoice](https://github.com/FunAudioLLM/CosyVoice) \
@@ -253,17 +246,16 @@ def main():
             outputs=[transcription_status, prompt_text]
         )
 
-        # generate_button.click(start_generation, inputs=[], outputs=[generate_button, stop_button])
+        generate_button.click(start_generation, inputs=[], outputs=[generate_button, stop_button])
         generate_button.click(generate_audio_wrapper,
-                      inputs=[tts_text, mode_checkbox_group, sft_dropdown, prompt_text, prompt_wav_upload, prompt_wav_record, instruct_text,
-                              seed, stream, speed],
-                      outputs=[audio_output, generate_button, stop_button])
+                            inputs=[tts_text, mode_checkbox_group, sft_dropdown, prompt_text, prompt_wav_upload, prompt_wav_record, instruct_text,
+                                    seed, stream, speed],
+                            outputs=[audio_output])
         stop_button.click(stop_generation, inputs=[], outputs=[generate_button, stop_button])
         
         seed_button.click(generate_seed, inputs=[], outputs=seed)
 
         mode_checkbox_group.change(fn=change_instruction, inputs=[mode_checkbox_group], outputs=[instruction_text])
-
 
 
     demo.queue(max_size=4, default_concurrency_limit=2)
