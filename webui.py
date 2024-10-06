@@ -122,8 +122,8 @@ def generate_audio(tts_text: str, mode_checkbox_group: str, sft_dropdown: str, p
         if not paragraph:
             continue
 
-        if i > 0:
-            yield (TARGET_SR, np.zeros(int(TARGET_SR * 0.05))) # adds 0.5 seconds silent before each paragraph (not first paragraph)
+        # if i > 0:
+        #    yield (TARGET_SR, np.zeros(int(TARGET_SR * 0.05))) # adds 0.5 seconds silent before each paragraph (not first paragraph)
 
         if mode_checkbox_group == 'Pre-trained Voice':
             generator = cosyvoice.inference_sft(paragraph, sft_dropdown, stream=stream, speed=speed)
@@ -143,7 +143,7 @@ def generate_audio(tts_text: str, mode_checkbox_group: str, sft_dropdown: str, p
             yield (TARGET_SR, audio_chunk['tts_speech'].numpy().flatten())
 
         if i < len(paragraphs) - 1:
-            yield (TARGET_SR, np.zeros(int(TARGET_SR * 1.0)))
+            yield (TARGET_SR, np.zeros(int(TARGET_SR * 0.7)))  # adds 0.7 seconds silent between each paragraph 
 
         # Clean VRAM after processing each paragraph
         torch.cuda.empty_cache()
